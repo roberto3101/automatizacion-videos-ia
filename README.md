@@ -22,7 +22,19 @@ Script (JSON)
     output/final/*.mp4
 ```
 
-## Setup
+## Quick start (Windows)
+
+```
+1. setup.bat         (first time only — installs deps, creates venv)
+2. Edit config/settings.json with your API keys
+3. start.bat         (every time you want to run the system)
+```
+
+That's it. `setup.bat` checks Python + FFmpeg, creates a virtualenv, installs base dependencies, and copies the settings template. `start.bat` activates the venv and launches the server at http://localhost:8000.
+
+For advanced AI features (Kokoro local voice, Whisper word-level subs, YouTube auto-upload), run `install_full.bat` after setup — adds ~2 GB of dependencies.
+
+## Manual setup (Linux/Mac/other)
 
 ### 1. Requirements
 
@@ -31,6 +43,8 @@ Script (JSON)
 - Optional: NVIDIA / AMD / Intel GPU (auto-detected for video encoding)
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate.bat on Windows
 pip install -r requirements.txt
 ```
 
@@ -71,6 +85,8 @@ In `settings.json`, `video_model` selects which fal.ai model is used. Cost vs qu
 python server.py
 # → http://localhost:8000
 ```
+
+On Windows just double-click `start.bat`.
 
 ## Project structure
 
