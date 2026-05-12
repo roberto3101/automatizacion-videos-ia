@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Factory — AI Video Production</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>🎬 Video Factory</h1>
+                <button class="btn-icon" onclick="toggleSidebar()" id="sidebarToggle">☰</button>
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="nav-tab" data-tab="produce" onclick="switchTab('produce')">🎥 Produce</button>
+                <button class="nav-tab" data-tab="trends" onclick="switchTab('trends')">🔥 Trends</button>
+                <button class="nav-tab" data-tab="characters" onclick="switchTab('characters')">👤 Characters</button>
+                <button class="nav-tab" data-tab="videos" onclick="switchTab('videos')">📁 Videos</button>
+                <button class="nav-tab" data-tab="publish" onclick="switchTab('publish')">📤 Publish</button>
+                <button class="nav-tab" data-tab="settings" onclick="switchTab('settings')">⚙️ Settings</button>
+            </nav>
+            <div class="sidebar-stats" id="sidebar-stats">
+                <div class="stat-item"><span class="stat-num" id="stat-videos">0</span> videos</div>
+                <div class="stat-item"><span class="stat-num" id="stat-chars">0</span> characters</div>
+                <div class="stat-item">$<span class="stat-num" id="stat-cost">0.00</span> spent</div>
+            </div>
+        </aside>
+
+        <main class="main">
+
+            <!-- DASHBOARD TAB -->
+            <section class="tab-content active" id="tab-dashboard">
+                <h2>Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="dash-card">
+                        <div class="dash-num" id="dash-total">0</div>
+                        <div class="dash-label">Total Videos</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-num" id="dash-done">0</div>
+                        <div class="dash-label">Completed</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-num" id="dash-rate">0%</div>
+                        <div class="dash-label">Success Rate</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-num" id="dash-cost">$0</div>
+                        <div class="dash-label">Total Cost</div>
+                    </div>
+                </div>
+
+                <div class="dash-section">
+                    <h3>Recommendations</h3>
+                    <div id="dash-recommendations"></div>
+                </div>
+
+                <div class="dash-section">
+                    <h3>Recent Activity</h3>
+                    <div id="dash-recent"></div>
+                </div>
+
+                <!-- Scheduler -->
+                <div class="dash-section card">
+                    <h3>⏰ Scheduler (100% Automatic)</h3>
+                    <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">
+                        Set it and forget it. Detects trends, produces videos, and publishes — all on schedule.
+                    </p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Mode</label>
+                            <select id="sched-mode" class="input">
+                                <option value="daily">Daily (at specific times)</option>
+                                <option value="interval">Every N hours</option>
+                                <option value="on_start">Run once on start</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Character</label>
+                            <select id="sched-character" class="input"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Daily Times (comma separated)</label>
+                            <input type="text" id="sched-times" class="input" value="08:00, 20:00" placeholder="08:00, 14:00, 20:00">
+                        </div>
+                        <div class="form-group">
+                            <label>Interval (hours)</label>
+                            <input type="number" id="sched-interval" class="input" value="12" min="1" max="24">
+                        </div>
+                        <div class="form-group">
+                            <label>Max videos/day</label>
+                            <input type="number" id="sched-max" class="input" value="2" min="1" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label>Auto-publish to YouTube</label>
+                            <select id="sched-publish" class="input">
+                                <option value="false" selected>No (produce only)</option>
+                                <option value="true">Yes (produce + publish)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="action-bar">
+                        <button class="btn btn-primary" onclick="startScheduler()" id="btn-sched-start">▶️ Start Scheduler</button>
+                        <button class="btn btn-danger" onclick="stopScheduler()" id="btn-sched-stop" style="display:none">⏹ Stop</button>
+                        <button class="btn btn-secondary" onclick="runSchedulerNow()">⚡ Run Once Now</button>
+                    </div>
+                    <div id="sched-status" style="margin-top:8px;font-size:12px;color:var(--text-muted)"></div>
+                </div>
+
+                <!-- Autopilot -->
+                <div class="dash-section">
+                    <h3>🤖 Autopilot (Manual)</h3>
+                    <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">
+                        Auto-detect viral trend → generate script → produce video. One click.
+                    </p>
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+                        <select id="autopilot-character" class="input" style="width:180px"></select>
+                        <select id="autopilot-language" class="input" style="width:100px">
+                            <option value="en">EN</option><option value="es">ES</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="runAutopilot()" id="btn-autopilot">🚀 Run Autopilot</button>
+                        <button class="btn btn-secondary" onclick="toggleAutopilotContext()">📎 Add Context</button>
+                    </div>
+
+                    <!-- Context Input -->
+                    <div id="autopilot-context" class="hidden card" style="margin-bottom:12px">
+                        <h4 style="margin-bottom:8px">📎 Context (optional)</h4>
+                        <small style="display:block;margin-bottom:10px;color:var(--text-muted)">Add texts and/or images as context. The AI will use this to generate a script tailored to your input.</small>
+
+                        <!-- Topic override -->
+                        <div class="form-group" style="margin-bottom:10px">
+                            <label>Topic (leave empty to auto-detect from trends)</label>
+                            <input type="text" id="autopilot-topic" class="input" placeholder="e.g. A mirror that shows the future...">
+                        </div>
+
+                        <!-- Text contexts -->
+                        <div class="form-group" style="margin-bottom:10px">
+                            <label>Context Texts <button class="btn btn-secondary btn-small" onclick="addContextText()" style="margin-left:8px">+ Add Text</button></label>
+                            <div id="context-texts-list"></div>
+                        </div>
+
+                        <!-- Image upload -->
+                        <div class="form-group" style="margin-bottom:10px">
+                            <label>Reference Images (max 5, max 10MB each)
+                                <small style="margin-left:8px">PNG, JPG, WEBP</small>
+                            </label>
+                            <div id="context-images-list" class="context-images-grid"></div>
+                            <label class="upload-area" id="upload-area">
+                                <input type="file" id="context-image-input" accept="image/*" multiple onchange="uploadContextImages(this.files)" style="display:none">
+                                <span>📁 Click or drag images here</span>
+                            </label>
+                        </div>
+
+                        <div style="font-size:11px;color:var(--text-muted)">
+                            Limits: max 5 texts (5000 chars each) · max 5 images (10MB, 4096px max)
+                        </div>
+                    </div>
+
+                    <div id="autopilot-status" class="hidden logs"></div>
+                </div>
+            </section>
+
+            <!-- PRODUCE TAB -->
+            <section class="tab-content" id="tab-produce">
+                <h2>New Video Production</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Character</label>
+                        <select id="prod-character" class="input"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Language</label>
+                        <select id="prod-language" class="input">
+                            <option value="en">English (EN)</option>
+                            <option value="es">Spanish (ES)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Duration</label>
+                        <select id="prod-duration" class="input">
+                            <option value="30">30s (Short)</option>
+                            <option value="60" selected>60s (Standard)</option>
+                            <option value="90">90s (Extended)</option>
+                            <option value="120">2 min (YouTube)</option>
+                            <option value="180">3 min (YouTube Long)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mode</label>
+                        <select id="prod-mode" class="input" onchange="toggleBatchMode()">
+                            <option value="single">Single Video</option>
+                            <option value="batch">Batch (multiple)</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width" id="single-topic-group">
+                        <label>Topic / Story Idea</label>
+                        <textarea id="prod-topic" class="input textarea" placeholder="e.g. A family moves into a house where the mirrors don't reflect what's actually in the room..."></textarea>
+                    </div>
+                    <div class="form-group full-width hidden" id="batch-topic-group">
+                        <label>Topics (one per line — max 10)</label>
+                        <textarea id="prod-topics-batch" class="input textarea" style="min-height:120px" placeholder="A door that only appears at 3am&#10;The last message from a dead phone&#10;A photo that ages instead of the person"></textarea>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="generateScript()" id="btn-generate-script">📝 Generate Script (API)</button>
+                    <button class="btn btn-secondary" onclick="showManualScript()">✍️ Paste Script Manually</button>
+                </div>
+
+                <!-- Manual Script Input -->
+                <div id="manual-script-input" class="hidden card" style="margin-top:16px">
+                    <h3>Paste Script JSON</h3>
+                    <small>Get the script from Claude chat, copy JSON, paste here:</small>
+                    <textarea id="manual-script-json" class="input textarea" style="min-height:180px;font-family:monospace;font-size:12px" placeholder='{"title":"...","scenes":[{"scene_number":1,"narration":"...","visual_prompt":"...","duration_seconds":10}]}'></textarea>
+                    <div class="action-bar">
+                        <button class="btn btn-secondary" onclick="hideManualScript()">Cancel</button>
+                        <button class="btn btn-primary" onclick="loadManualScript()">Load Script</button>
+                        <button class="btn btn-secondary" onclick="saveAsTemplate()">💾 Save as Template</button>
+                    </div>
+                </div>
+
+                <!-- Saved Script Templates -->
+                <div class="card" style="margin-top:16px">
+                    <div class="section-header" style="margin-bottom:12px">
+                        <h3>💾 Saved Scripts</h3>
+                        <button class="btn btn-secondary btn-small" onclick="loadTemplates()">Refresh</button>
+                    </div>
+                    <div id="templates-list"><p class="empty-state" style="padding:12px">No saved scripts yet. Paste a script and click "Save as Template".</p></div>
+                </div>
+
+                <!-- Batch Results -->
+                <div id="batch-results" class="hidden">
+                    <h3>Batch Scripts Generated</h3>
+                    <div id="batch-list" class="scenes-list"></div>
+                    <button class="btn btn-primary" onclick="produceBatch()" id="btn-produce-batch">🚀 Produce All</button>
+                </div>
+
+                <!-- Script Preview with inline editing -->
+                <div id="script-preview" class="hidden">
+                    <h3>Script Preview</h3>
+                    <div class="script-header">
+                        <input type="text" id="script-title" class="input" placeholder="Video Title" style="font-size:16px;font-weight:600">
+                        <span class="badge badge-generating" id="script-scenes-count"></span>
+                    </div>
+                    <div id="script-scenes" class="scenes-list"></div>
+                    <div class="action-bar">
+                        <button class="btn btn-secondary" onclick="generateScript()">🔄 Regenerate</button>
+                        <button class="btn btn-primary" onclick="startProduction()" id="btn-produce">🚀 Start Production</button>
+                    </div>
+                </div>
+
+                <!-- Production Status with real progress -->
+                <div id="production-status" class="hidden">
+                    <h3>Production Progress</h3>
+                    <div class="progress-container">
+                        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                        <span class="progress-pct" id="progress-pct">0%</span>
+                    </div>
+                    <div class="progress-steps" id="progress-steps">
+                        <div class="step-item" data-step="voice"><span class="step-icon">⏳</span> Voice</div>
+                        <div class="step-item" data-step="music"><span class="step-icon">⏳</span> Music</div>
+                        <div class="step-item" data-step="video"><span class="step-icon">⏳</span> Video</div>
+                        <div class="step-item" data-step="subtitles"><span class="step-icon">⏳</span> Subtitles</div>
+                        <div class="step-item" data-step="assembly"><span class="step-icon">⏳</span> Assembly</div>
+                        <div class="step-item" data-step="thumbnail"><span class="step-icon">⏳</span> Thumbnail</div>
+                    </div>
+                    <div id="production-logs" class="logs"></div>
+                    <div id="production-cost" class="cost-display"></div>
+
+                    <!-- Video Result -->
+                    <div id="production-result" class="hidden">
+                        <div class="result-container">
+                            <video id="result-video" controls class="video-preview"></video>
+                            <div class="result-actions">
+                                <a id="result-download" class="btn btn-primary" download>⬇️ Download MP4</a>
+                                <button class="btn btn-secondary" onclick="schedulePublish()">📤 Schedule Publishing</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TRENDS TAB -->
+            <section class="tab-content" id="tab-trends">
+                <div class="section-header">
+                    <h2>🔥 Viral Content Scanner</h2>
+                    <button class="btn btn-primary" onclick="loadTrends()" id="btn-trends">Scan Now</button>
+                </div>
+                <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">
+                    Scans Reddit, YouTube, Google Trends, Creepypasta, and 4chan /x/ for viral horror ideas. Click any result to use it.
+                </p>
+                <div id="trends-content">
+                    <p class="empty-state">Click "Scan Now" to find viral content ideas</p>
+                </div>
+            </section>
+
+            <!-- CHARACTERS TAB -->
+            <section class="tab-content" id="tab-characters">
+                <div class="section-header">
+                    <h2>Characters</h2>
+                    <button class="btn btn-primary" onclick="showCharacterForm()">+ New Character</button>
+                </div>
+                <div id="character-form" class="hidden card">
+                    <h3 id="char-form-title">New Character</h3>
+                    <input type="hidden" id="char-edit-id">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Name</label><input type="text" id="char-name" class="input" placeholder="Old Emilio"></div>
+                        <div class="form-group"><label>Language</label><select id="char-language" class="input"><option value="en">English</option><option value="es">Spanish</option></select></div>
+                        <div class="form-group full-width">
+                            <label>Voice <button class="btn btn-secondary btn-small" onclick="previewVoice()" style="margin-left:8px">🔊 Preview</button></label>
+                            <select id="char-voice" class="input" onchange="stopVoicePreview()">
+                                <optgroup label="⭐ HD Premium (Best Quality)">
+                                    <option value="en-US-AndrewMultilingualNeural">Andrew HD — Deep, mature, cinematic (Male US)</option>
+                                    <option value="en-US-BrianMultilingualNeural">Brian HD — Rich, authoritative (Male US)</option>
+                                    <option value="en-AU-WilliamMultilingualNeural">William HD — Deep, gravelly (Male AU)</option>
+                                    <option value="en-US-AvaMultilingualNeural">Ava HD — Smooth, dramatic (Female US)</option>
+                                    <option value="en-US-EmmaMultilingualNeural">Emma HD — Warm, storytelling (Female US)</option>
+                                </optgroup>
+                                <optgroup label="🎙️ English Male">
+                                    <option value="en-US-GuyNeural">Guy — Classic narrator, reliable (US)</option>
+                                    <option value="en-US-RogerNeural">Roger — Older, serious, deep (US)</option>
+                                    <option value="en-US-EricNeural">Eric — Calm, measured (US)</option>
+                                    <option value="en-US-ChristopherNeural">Christopher — Professional, warm (US)</option>
+                                    <option value="en-US-AndrewNeural">Andrew — Confident, motivational (US)</option>
+                                    <option value="en-US-BrianNeural">Brian — Warm, educational (US)</option>
+                                    <option value="en-US-SteffanNeural">Steffan — Young, energetic (US)</option>
+                                    <option value="en-GB-RyanNeural">Ryan — Sophisticated (UK)</option>
+                                    <option value="en-GB-ThomasNeural">Thomas — Deep, commanding (UK)</option>
+                                </optgroup>
+                                <optgroup label="🎙️ English Female">
+                                    <option value="en-US-AriaNeural">Aria — Expressive, dramatic (US)</option>
+                                    <option value="en-US-JennyNeural">Jenny — Clear, professional (US)</option>
+                                    <option value="en-US-MichelleNeural">Michelle — Confident, business (US)</option>
+                                    <option value="en-US-EmmaNeural">Emma — Warm, educational (US)</option>
+                                    <option value="en-US-AvaNeural">Ava — Professional, polished (US)</option>
+                                    <option value="en-US-AnaNeural">Ana — Young, fresh (US)</option>
+                                    <option value="en-GB-SoniaNeural">Sonia — Elegant (UK)</option>
+                                    <option value="en-GB-LibbyNeural">Libby — Friendly (UK)</option>
+                                </optgroup>
+                                <optgroup label="🇪🇸 Edge-TTS Spanish">
+                                    <option value="es-MX-JorgeNeural">Jorge — Deep, narrative (MX)</option>
+                                    <option value="es-ES-AlvaroNeural">Alvaro — Rich, dramatic (ES)</option>
+                                    <option value="es-MX-DaliaNeural">Dalia — Warm, natural (MX)</option>
+                                    <option value="es-ES-ElviraNeural">Elvira — Expressive (ES)</option>
+                                </optgroup>
+                                <optgroup label="🐟 Fish Audio S2 (Best Quality — API)">
+                                    <option value="fish:default">Fish Audio: Default (needs API key)</option>
+                                </optgroup>
+                                <optgroup label="⭐ XTTS v2 (Voice Cloning — Local)" id="xtts-voice-options">
+                                    <option value="xtts:default">XTTS: Default voice</option>
+                                </optgroup>
+                                <optgroup label="🔥 Kokoro AI (Good English — Free)">
+                                    <option value="kokoro:am_adam">Adam — Deep male, narrator</option>
+                                    <option value="kokoro:am_michael">Michael — Mature male, authoritative</option>
+                                    <option value="kokoro:am_echo">Echo — Male, storyteller</option>
+                                    <option value="kokoro:af_heart">Heart — Warm female, emotional</option>
+                                    <option value="kokoro:af_sky">Sky — Clear female, professional</option>
+                                    <option value="kokoro:af_bella">Bella — Soft female, intimate</option>
+                                    <option value="kokoro:bm_george">George — British male, commanding</option>
+                                    <option value="kokoro:bm_lewis">Lewis — British male, sophisticated</option>
+                                    <option value="kokoro:bf_emma">Emma — British female, elegant</option>
+                                </optgroup>
+                            </select>
+                            <audio id="voice-preview-player" style="display:none"></audio>
+                        </div>
+                        <div class="form-group full-width"><label>Description</label><textarea id="char-description" class="input textarea" placeholder="Who is this character?"></textarea></div>
+                        <div class="form-group full-width"><label>Personality</label><textarea id="char-personality" class="input textarea" placeholder="Speaks slowly, uses short sentences..."></textarea></div>
+                        <div class="form-group full-width"><label>Visual Prompt</label><textarea id="char-visual" class="input textarea" placeholder="Old man with hat by campfire, dark forest..."></textarea></div>
+                        <div class="form-group full-width"><label>Sample Hooks (one per line)</label><textarea id="char-hooks" class="input textarea" placeholder="Sit down, kid..."></textarea></div>
+                    </div>
+                    <div class="action-bar">
+                        <button class="btn btn-secondary" onclick="hideCharacterForm()">Cancel</button>
+                        <button class="btn btn-primary" onclick="saveCharacter()">Save</button>
+                    </div>
+                </div>
+                <div id="characters-list" class="cards-grid"></div>
+            </section>
+
+            <!-- VIDEOS TAB (with thumbnails) -->
+            <section class="tab-content" id="tab-videos">
+                <h2>Produced Videos</h2>
+                <div id="videos-list" class="video-grid"></div>
+                <p id="no-videos" class="empty-state hidden">No videos yet. Go to Produce or run Autopilot.</p>
+            </section>
+
+            <!-- PUBLISH TAB -->
+            <section class="tab-content" id="tab-publish">
+                <h2>📤 Publish</h2>
+
+                <!-- YouTube Status -->
+                <div class="card">
+                    <div class="section-header" style="margin-bottom:8px">
+                        <h3>📺 YouTube (Auto-Upload)</h3>
+                        <span class="badge" id="yt-auth-badge">checking...</span>
+                    </div>
+                    <div id="yt-setup-steps"></div>
+                    <div id="yt-auth-actions"></div>
+                </div>
+
+                <!-- Publish a video -->
+                <div class="card">
+                    <h3>Publish a Video</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Select Video</label>
+                            <select id="publish-video-select" class="input"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>YouTube Privacy</label>
+                            <select id="publish-privacy" class="input">
+                                <option value="public">Public</option>
+                                <option value="unlisted">Unlisted</option>
+                                <option value="private">Private</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Custom Title (optional — leave empty to use video title)</label>
+                            <input type="text" id="publish-title" class="input" placeholder="Override title...">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Tags (comma separated)</label>
+                            <input type="text" id="publish-tags" class="input" placeholder="horror, scary story, creepypasta, nosleep" value="horror, scary story, creepypasta, nosleep, storytime">
+                        </div>
+                    </div>
+                    <div class="action-bar">
+                        <button class="btn btn-primary" onclick="publishAll()">📤 Publish All Platforms</button>
+                        <button class="btn btn-secondary" onclick="publishYouTubeOnly()">📺 YouTube Only</button>
+                        <button class="btn btn-secondary" onclick="exportTikTok()">🎵 TikTok Export</button>
+                        <button class="btn btn-secondary" onclick="exportInstagram()">📸 Instagram Export</button>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div id="publish-results" class="hidden">
+                    <h3>Results</h3>
+                    <div id="publish-results-content"></div>
+                </div>
+            </section>
+
+            <!-- SETTINGS TAB -->
+            <section class="tab-content" id="tab-settings">
+                <h2>Settings</h2>
+
+                <!-- TTS BENCHMARK -->
+                <div class="card">
+                    <h3>📊 TTS Engine Benchmark</h3>
+                    <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Comparison of all available voice engines. Higher bars = better.</p>
+                    <div id="benchmark-container" style="overflow-x:auto"></div>
+                </div>
+
+                <div class="card">
+                    <h3>🔑 API Keys</h3>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Anthropic API Key (script generation)</label>
+                            <div class="input-with-status"><input type="password" id="set-anthropic-key" class="input" placeholder="sk-ant-..."><span id="anthropic-status" class="status-dot"></span></div>
+                            <small><a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></small>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>fal.ai API Key (video generation — optional)</label>
+                            <div class="input-with-status"><input type="password" id="set-fal-key" class="input" placeholder="fal-..."><span id="fal-status" class="status-dot"></span></div>
+                            <small><a href="https://fal.ai" target="_blank">fal.ai</a> — Without it, placeholder videos for testing</small>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>YouTube Data API Key (trends + publishing — free)</label>
+                            <div class="input-with-status"><input type="password" id="set-youtube-key" class="input" placeholder="AIza..."><span id="youtube-status" class="status-dot"></span></div>
+                            <small><a href="https://console.cloud.google.com/apis" target="_blank">Google Cloud Console</a> — 10,000 free units/day</small>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Fish Audio API Key (best voice quality — free tier available)</label>
+                            <div class="input-with-status"><input type="password" id="set-fish-key" class="input" placeholder="sk-..."><span id="fish-status" class="status-dot"></span></div>
+                            <small><a href="https://fish.audio" target="_blank">fish.audio</a> — 7 min free/month, best TTS quality</small>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Fish Audio Model ID (optional — for custom voice)</label>
+                            <input type="text" id="set-fish-model" class="input" placeholder="Model ID from fish.audio (leave empty for default)">
+                            <small>Browse voices at <a href="https://fish.audio/explore" target="_blank">fish.audio/explore</a></small>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings()">Save Keys</button>
+                </div>
+                <div class="card">
+                    <h3>🆓 Ollama (Free Local AI)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Ollama Model</label>
+                            <input type="text" id="set-ollama-model" class="input" placeholder="llama3.2 (leave empty to use Claude API)">
+                            <small>Install free: <a href="https://ollama.ai" target="_blank">ollama.ai</a> → <code>ollama pull llama3.2</code></small>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveOllama()">Save</button>
+                </div>
+                <div class="card">
+                    <h3>🔤 Subtitles (Global Style)</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Preset</label>
+                            <select id="sub-preset" class="input" onchange="loadSubPreset()">
+                                <option value="viral" selected>🔥 Viral (word-by-word, yellow highlight)</option>
+                                <option value="bold_red">❤️ Bold Red (word-by-word, red highlight)</option>
+                                <option value="neon_green">💚 Neon Green (word-by-word, green highlight)</option>
+                                <option value="classic">📝 Classic (sentence, white, bottom)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Font</label>
+                            <select id="sub-font" class="input">
+                                <option value="Arial Black">Arial Black</option>
+                                <option value="Impact">Impact</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Verdana">Verdana</option>
+                                <option value="Tahoma">Tahoma</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Size</label>
+                            <input type="range" id="sub-size" class="input" min="14" max="50" value="30" oninput="document.getElementById('sub-size-val').textContent=this.value">
+                            <small>Size: <span id="sub-size-val">30</span></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Words per chunk</label>
+                            <select id="sub-words" class="input">
+                                <option value="1">1 word (max impact)</option>
+                                <option value="2" selected>2 words (viral style)</option>
+                                <option value="3">3 words</option>
+                                <option value="8">Sentence mode</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Highlight Color</label>
+                            <select id="sub-highlight" class="input">
+                                <option value="&H0000FFFF">Yellow</option>
+                                <option value="&H000000FF">Red</option>
+                                <option value="&H0000FF00">Green</option>
+                                <option value="&H00FF8000">Orange</option>
+                                <option value="&H00FF00FF">Pink</option>
+                                <option value="&H00FFFFFF">White (no highlight)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Position</label>
+                            <select id="sub-position" class="input">
+                                <option value="center" selected>Center (recommended)</option>
+                                <option value="bottom">Bottom</option>
+                                <option value="top">Top</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Preview Text</label>
+                            <div style="display:flex;gap:8px">
+                                <input type="text" id="sub-preview-text" class="input" style="flex:1" placeholder="Custom preview text..." value="">
+                                <select id="sub-preview-lang" class="input" style="width:80px">
+                                    <option value="en">EN</option>
+                                    <option value="es">ES</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-bar">
+                        <button class="btn btn-primary" onclick="previewSubtitles()">▶️ Preview with Audio</button>
+                        <button class="btn btn-secondary" onclick="saveSubtitleStyle()">💾 Save as Global Style</button>
+                    </div>
+                    <div id="sub-preview-container" class="hidden" style="margin-top:12px">
+                        <video id="sub-preview-video" controls class="video-preview" style="max-width:300px"></video>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🎵 Background Music</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Music</label><select id="set-music-enabled" class="input"><option value="true" selected>Enabled</option><option value="false">Disabled</option></select></div>
+                        <div class="form-group"><label>Mood</label><select id="set-music-mood" class="input"><option value="horror" selected>Horror</option><option value="mystery">Mystery</option><option value="calm">Calm</option><option value="epic">Epic</option></select></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveMusicSettings()">Save</button>
+                </div>
+                <div class="card">
+                    <h3>⭐ XTTS v2 — Voice Cloning (Best Quality)</h3>
+                    <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Clone any voice with just 6-15 seconds of audio. Upload a file or record from your microphone.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>XTTS Language</label>
+                            <select id="xtts-language" class="input">
+                                <option value="es" selected>Spanish</option>
+                                <option value="en">English</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="it">Italian</option>
+                                <option value="ja">Japanese</option>
+                                <option value="zh-cn">Chinese</option>
+                                <option value="ko">Korean</option>
+                                <option value="ar">Arabic</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>My Voice References</label>
+                            <select id="xtts-voice-select" class="input">
+                                <option value="default">Default (auto-generated)</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Upload Voice Sample (6-15 sec WAV/MP3)</label>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <input type="text" id="xtts-voice-name" class="input" style="width:150px" placeholder="Voice name...">
+                                <input type="file" id="xtts-voice-file" accept="audio/*" class="input" style="flex:1">
+                                <button class="btn btn-primary btn-small" onclick="uploadXttsVoice()">Upload</button>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Record from Microphone</label>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <input type="text" id="xtts-record-name" class="input" style="width:150px" placeholder="Voice name...">
+                                <button id="xtts-record-btn" class="btn btn-secondary btn-small" onclick="toggleRecording()">🎙️ Start Recording</button>
+                                <span id="xtts-record-status" style="font-size:11px;color:var(--text-muted)"></span>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Preview XTTS</label>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <input type="text" id="xtts-preview-text" class="input" style="flex:1" placeholder="Texto de prueba..." value="Sientate mijo. Esta historia nunca se la he contado a nadie.">
+                                <button class="btn btn-primary btn-small" onclick="previewXtts()" id="xtts-preview-btn">▶️ Preview</button>
+                            </div>
+                            <audio id="xtts-preview-audio" controls style="width:100%;margin-top:8px;display:none"></audio>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveXttsSettings()">Save XTTS Settings</button>
+                </div>
+                <div class="card">
+                    <h3>🗣️ Voice Settings (Edge-TTS / Kokoro)</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Kokoro Speed</label>
+                            <input type="range" id="set-kokoro-speed" class="input" min="0.5" max="1.5" step="0.05" value="0.85" oninput="document.getElementById('kokoro-speed-val').textContent=this.value">
+                            <small>Speed: <span id="kokoro-speed-val">0.85</span> (lower = slower, more natural)</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Edge-TTS Rate</label>
+                            <select id="set-tts-rate" class="input">
+                                <option value="-30%">Very Slow (-30%)</option>
+                                <option value="-20%">Slow (-20%)</option>
+                                <option value="-10%" selected>Slightly Slow (-10%)</option>
+                                <option value="+0%">Normal</option>
+                                <option value="+10%">Fast (+10%)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Edge-TTS Pitch</label>
+                            <select id="set-tts-pitch" class="input">
+                                <option value="-10Hz">Very Deep (-10Hz)</option>
+                                <option value="-5Hz" selected>Deep (-5Hz)</option>
+                                <option value="+0Hz">Normal</option>
+                                <option value="+5Hz">High (+5Hz)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveVoiceSettings()">Save</button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification hidden">
+        <span id="notif-text"></span>
+        <button onclick="this.parentElement.classList.add('hidden')" class="notif-close">✕</button>
+    </div>
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "Skeleton Character (Costumed)",
+  "description": "Photorealistic skeleton character — skull face on a human body wearing real costumes/clothes in real-world environments. The style used by viral channels like @EspacioDivertido, @LCode, and historical-explainer accounts. Skeleton ACTS in scenes, not just stands on white.",
+  "personality": "Charismatic protagonist that the viewer follows through a scenario. Reacts to events with body language (looking around, holding objects, walking). The skeleton skull adds the 'something is off' tension without scaring kids. Voice narrates over the scene as third-person observer OR first-person from skeleton's POV.",
+  "voice_id": "es-MX-JorgeNeural",
+  "visual_prompt": "A realistic skeleton character with a clean photorealistic human skull head and bony skeletal hands, body wearing real clothing appropriate to the scene, standing in a real cinematic environment, natural lighting, photographic depth of field, 35mm film aesthetic, 9:16 vertical portrait composition. The skeleton looks like a real character in the world — NOT a 3D render on a white background, NOT cartoon, NOT pixar style. Costume and setting change per scene; the skull face and skeletal hands stay consistent.",
+  "negative_prompt": "cartoon, anime, pixar, disney, plastic toy, big anime eyes, kawaii, white background isolated render, stylized proportions, low quality",
+  "sample_hooks": [
+    "Imagina que eres un soldado romano. Estás a punto de marchar a las Galias.",
+    "Día uno como obrero medieval. Buscas salitre en establos.",
+    "Día tres siendo Einstein en la antigua Grecia. Esto fue lo que vi.",
+    "Trabajas en la peste negra. Tu única protección es esta máscara de pájaro.",
+    "Eres un cazador del Yukon en mil ochocientos. Hoy aprendes a sobrevivir."
+  ],
+  "language": "es",
+  "preferred_image_model": "fal-ai/flux/schnell",
+  "preferred_video_model": "fal-ai/veo3.1/fast/image-to-video",
+  "fallback_video_model": "fal-ai/kling-video/v2.1/standard/image-to-video",
+  "reference_images": [
+    "assets/references/skeleton/viral_medieval_worker.jpg",
+    "assets/references/skeleton/viral_modern_hoodie.jpg",
+    "assets/references/skeleton/viral_einstein_historical.jpg"
+  ],
+  "style_notes": "Use the reference_images as STYLE GUIDES (not as direct input — they're frame grabs from viral videos). For FLUX prompts, describe: 'realistic skeleton character with skull head, body wearing [specific costume], in [specific real-world environment], cinematic photography'. Then feed those FLUX images into Veo 3.1 image-to-video for subtle motion (head turn, holding object, walking forward). The viral format is 1st-person or 3rd-person STORY — day-in-the-life or 'imagina que eres X'. Subtitles big yellow/white center-bottom CapCut style."
+}

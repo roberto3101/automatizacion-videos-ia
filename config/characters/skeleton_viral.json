@@ -1,0 +1,28 @@
+{
+  "name": "Skeleton Anatomical (Aicenturies)",
+  "description": "Photorealistic 3D human figure with translucent glass-like skin showing the skeleton underneath. The base reference style used by aicenturies-style health/anatomy viral channels. NOT cartoon — photographic quality, realistic proportions, clinical aesthetic.",
+  "personality": "Clinical, observational, second-person narration ('your body', 'inside you'). Speaks like a science explainer — facts first, then emotional reveal. No jokes, no whimsy. The horror comes from the realism of the damage.",
+  "voice_id": "es-MX-JorgeNeural",
+  "visual_prompt": "Photorealistic 3D rendered full body human figure with translucent glass-like skin, anatomically accurate skeleton clearly visible underneath, realistic body proportions (NOT stylized or cartoon), ivory white or warm amber bone tones, soft seamless white studio background, professional product photography lighting, sharp focus, high detail textures, no anime eyes, no cartoon features, vertical 9:16 portrait composition.",
+  "negative_prompt": "cartoon, anime, pixar, disney, stylized, big eyes, kawaii, mascot, plastic toy, low quality, deformed anatomy",
+  "sample_hooks": [
+    "Esto es lo que pasa dentro de tu cuerpo cuando duermes menos de seis horas.",
+    "Tu hígado hace exactamente esto cada vez que tomas alcohol. Día por día.",
+    "Si comes ultraprocesados todos los días, esto le pasa a tu intestino en treinta.",
+    "Tu cerebro tarda exactamente este tiempo en volverse adicto al teléfono.",
+    "Esto es lo que el azúcar le hace a tus arterias en una semana."
+  ],
+  "language": "es",
+  "preferred_image_model": "fal-ai/flux/schnell",
+  "preferred_video_model": "fal-ai/veo3.1/fast/image-to-video",
+  "fallback_video_model": "fal-ai/kling-video/v2.1/standard/image-to-video",
+  "reference_images": [
+    "assets/references/skeleton/anatomical_amber_translucent.png",
+    "assets/references/skeleton/anatomical_ivory_cream.png",
+    "assets/references/skeleton/anatomical_gold_polished.jpg",
+    "assets/references/skeleton/anatomical_warm_translucent.png",
+    "assets/references/skeleton/anatomical_realistic_clear.png",
+    "assets/references/skeleton/anatomical_glass_skin.jpg"
+  ],
+  "style_notes": "ALWAYS use one of the reference_images as input to image-to-video (R2V mode) — the references define the body proportions and the translucent skin look. Scene-specific details get added on top: glowing organs (heart=red, brain=yellow, liver=orange, stomach=orange), expression in the skull, posture changes. Lighting stays soft and clinical. NEVER add cartoon eyes or stylized features. Backgrounds stay simple (white, dark blue, or subtle gradient) so the body is the focus."
+}

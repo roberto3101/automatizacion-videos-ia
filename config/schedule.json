@@ -1,0 +1,18 @@
+{
+  "enabled": false,
+  "mode": "daily",
+  "daily_times": [
+    "09:00",
+    "21:00"
+  ],
+  "interval_hours": 12,
+  "character_id": 5,
+  "language": "en",
+  "duration": 60,
+  "auto_publish_youtube": false,
+  "max_videos_per_day": 3,
+  "niche": "horror",
+  "notify_on_complete": true,
+  "videos_produced_today": 0,
+  "last_run_date": ""
+}

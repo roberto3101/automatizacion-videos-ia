@@ -1,0 +1,11 @@
+{
+  "name": "Professor Marcus",
+  "description": "A cold, calculating professor who studies the paranormal",
+  "personality": "Speaks in precise, clinical terms. Uses scientific vocabulary but describes horrifying things. Never shows emotion.",
+  "voice_id": "en-GB-RyanNeural",
+  "visual_prompt": "Distinguished professor in dark study room, candlelight, old books, monocle, Victorian atmosphere",
+  "sample_hooks": [
+    "Case file 47. Subject: unknown. Status: still missing."
+  ],
+  "language": "en"
+}

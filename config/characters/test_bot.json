@@ -1,0 +1,9 @@
+{
+  "name": "Test Bot",
+  "description": "Test character",
+  "personality": "",
+  "voice_id": "en-US-GuyNeural",
+  "visual_prompt": "",
+  "sample_hooks": [],
+  "language": "en"
+}

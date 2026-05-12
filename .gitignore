@@ -1,0 +1,116 @@
+# ──────────────────────────────────────────────────────────────
+# SECRETS (NEVER commit these)
+# ──────────────────────────────────────────────────────────────
+config/settings.json
+config/clave_fish.md
+config/youtube_oauth_credentials.json
+config/youtube_token.json
+keys.md
+*.env
+.env
+.env.*
+.history/
+
+# ──────────────────────────────────────────────────────────────
+# Generated content (runtime output, can be huge)
+# ──────────────────────────────────────────────────────────────
+output/audio/
+output/clips/
+output/exports/
+output/final/
+output/images/
+output/music_cache/
+output/previews/
+output/scripts/
+output/thumbnails/
+output/uploads/
+output/voice_previews/
+output/voice_tests/
+
+# Local databases
+data/pipeline.db
+data/pipeline.db-shm
+data/pipeline.db-wal
+data/autopilot_log.json
+
+# ──────────────────────────────────────────────────────────────
+# Operator's private reference packs (large binaries, copyright)
+# ──────────────────────────────────────────────────────────────
+assets/references/
+assets/skeleton_ref/
+assets/music/horror/
+assets/music/mystery/
+assets/music/calm/
+assets/music/epic/
+assets/voices/
+
+# macOS metadata that snuck into zips
+__MACOSX/
+.DS_Store
+
+# ──────────────────────────────────────────────────────────────
+# Python
+# ──────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+.python-version
+
+# ──────────────────────────────────────────────────────────────
+# IDE / Editor
+# ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ──────────────────────────────────────────────────────────────
+# Logs and temp
+# ──────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+.coverage
+.pytest_cache/
+
+# ──────────────────────────────────────────────────────────────
+# Personal notes / scratchpad (not for repo)
+# ──────────────────────────────────────────────────────────────
+notas-personales.md
+TODO-privado.md
+
+# ──────────────────────────────────────────────────────────────
+# Private infra and tooling
+# ──────────────────────────────────────────────────────────────
+deploy.bat
+.claude/
+analisis_unpacked/
+*.docx
+*.xlsx
+*.pdf
