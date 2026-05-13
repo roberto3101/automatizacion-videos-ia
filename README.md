@@ -22,28 +22,33 @@ Script (JSON)
     output/final/*.mp4
 ```
 
-## Quick start (Windows)
+## Quick start (Windows) — UN SOLO archivo
 
 ```
-1. Doble-click en setup.bat       (instala TODO — Python, FFmpeg, deps)
-2. Edita config/settings.json     (mete tus API keys)
-3. Doble-click en start.bat       (cada vez que quieras correr el sistema)
+1. Doble-click en start.bat
+2. (Espera a que termine — primera vez tarda 10-30 min)
+3. Notepad abre para que metas tus API keys en config\settings.json, guarda
+4. El navegador abre solo en http://localhost:8000
 ```
 
-That's it. **`setup.bat` is all-in-one:**
-- Detects Python — **downloads and installs Python 3.11 if missing** (no admin needed, user-mode install)
-- Detects FFmpeg — **downloads portable FFmpeg to `bin/ffmpeg/` if missing** (~140 MB, no PATH changes needed)
-- Creates a virtualenv at `.venv/`
-- Installs `requirements.txt` (base: FastAPI + Edge-TTS + httpx, ~50 MB)
-- Optionally prompts to also install `requirements-full.txt` (Kokoro + Whisper + YouTube API, ~2 GB)
-- Copies `settings.example.json` → `settings.json`
-- Creates all required output directories
+Eso es todo. **`start.bat` hace TODO automático en una sola corrida:**
 
-`start.bat` activates the venv, detects portable FFmpeg if present, kills any zombie process on port 8000, opens your browser, and launches the server at http://localhost:8000.
+1. **Python** — si no lo tienes, descarga Python 3.11.9 de python.org e instala en modo usuario (sin admin). Se relanza solo después para que Windows lea el nuevo PATH.
+2. **FFmpeg** — si no está en el sistema, descarga el portable a `bin/ffmpeg/` (~140 MB). No toca el PATH del sistema, lo usa solo en esta sesión.
+3. **Entorno virtual** — crea `.venv\` si no existe.
+4. **Dependencias base** — `requirements.txt` (~50 MB: FastAPI + Edge-TTS + httpx).
+5. **Dependencias avanzadas** — `requirements-full.txt` (~2 GB: Kokoro + Whisper + Fish Audio + fal_client + YouTube API + Whisper model precargado).
+6. **Configuración** — copia `settings.example.json` → `settings.json` y lo abre en Notepad la primera vez.
+7. **Carpetas** — crea `output/*`, `data/`, `assets/music/*`, `assets/voices/`, `assets/references/skeleton/`.
+8. **Puerto** — mata cualquier proceso zombi en el 8000.
+9. **Servidor** — abre el navegador automático y arranca FastAPI en `http://localhost:8000`.
 
-`update.bat` jala los últimos cambios del repo (`git pull`) y reinstala dependencias si `requirements.txt` cambió.
+Para correr de nuevo después: doble-click otra vez en `start.bat`. Las verificaciones son rápidas (~3 segundos) si todo ya está instalado.
 
-`install_full.bat` agrega las features avanzadas (si las saltaste en setup.bat).
+### Mantenimiento
+
+- **`update.bat`** — jala los últimos cambios del repo con `git pull` y reinstala dependencias si `requirements.txt` cambió.
+- Para forzar reinstalación de features avanzadas: borra el archivo `.venv\.full_installed` y vuelve a correr `start.bat`.
 
 ## Manual setup (Linux/Mac/other)
 
