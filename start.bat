@@ -1,9 +1,12 @@
 @echo off
+setlocal EnableDelayedExpansion
 chcp 65001 >nul
 title Video Factory
 
-REM ── Verificar que setup.bat se corrio ───────────────────────
-if not exist ".venv\Scripts\python.exe" (
+set "BASE_DIR=%~dp0"
+
+REM ── Verificar setup ─────────────────────────────────────────
+if not exist "%BASE_DIR%.venv\Scripts\python.exe" (
     echo.
     echo [ERROR] El entorno virtual no existe.
     echo Corre setup.bat primero.
@@ -12,7 +15,7 @@ if not exist ".venv\Scripts\python.exe" (
     exit /b 1
 )
 
-if not exist "config\settings.json" (
+if not exist "%BASE_DIR%config\settings.json" (
     echo.
     echo [ERROR] config\settings.json no existe.
     echo Corre setup.bat primero.
@@ -21,9 +24,14 @@ if not exist "config\settings.json" (
     exit /b 1
 )
 
+REM ── Agregar FFmpeg portable al PATH si esta instalado localmente ──
+if exist "%BASE_DIR%bin\ffmpeg\bin\ffmpeg.exe" (
+    set "PATH=%BASE_DIR%bin\ffmpeg\bin;%PATH%"
+)
+
 REM ── Activar venv ────────────────────────────────────────────
-call .venv\Scripts\activate.bat
-if errorlevel 1 (
+call "%BASE_DIR%.venv\Scripts\activate.bat"
+if !errorlevel! NEQ 0 (
     echo [ERROR] No se pudo activar el entorno virtual.
     pause
     exit /b 1
@@ -48,7 +56,6 @@ echo.
 
 python server.py
 
-REM Si el servidor cae, pausa para que el usuario vea el error
 echo.
 echo [Servidor detenido]
 pause

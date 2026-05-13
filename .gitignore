@@ -48,6 +48,9 @@ assets/voices/
 __MACOSX/
 .DS_Store
 
+# Portable FFmpeg downloaded by setup.bat (large, redundant in repo)
+bin/
+
 # ──────────────────────────────────────────────────────────────
 # Python
 # ──────────────────────────────────────────────────────────────

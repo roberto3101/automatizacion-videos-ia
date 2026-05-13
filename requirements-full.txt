@@ -1,0 +1,25 @@
+# Advanced AI dependencies (~2 GB).
+# Install via: install_full.bat (Windows) or `pip install -r requirements-full.txt`.
+# NOT included in requirements.txt to keep base install fast (~5 min).
+#
+# XTTS v2 (voice cloning) is NOT here because it pulls torch (~3 GB).
+# If you want it:  pip install TTS torch torchaudio
+
+# Whisper — word-level subtitle timing
+openai-whisper
+
+# Local TTS engines
+kokoro
+fish-audio-sdk
+
+# fal.ai direct client (used by produce_*.py legacy scripts)
+fal-client
+
+# Audio utilities (used by Kokoro / fish)
+soundfile
+numpy
+
+# YouTube auto-upload
+google-auth-oauthlib
+google-api-python-client
+google-auth-httplib2

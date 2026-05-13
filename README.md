@@ -25,14 +25,25 @@ Script (JSON)
 ## Quick start (Windows)
 
 ```
-1. setup.bat         (first time only — installs deps, creates venv)
-2. Edit config/settings.json with your API keys
-3. start.bat         (every time you want to run the system)
+1. Doble-click en setup.bat       (instala TODO — Python, FFmpeg, deps)
+2. Edita config/settings.json     (mete tus API keys)
+3. Doble-click en start.bat       (cada vez que quieras correr el sistema)
 ```
 
-That's it. `setup.bat` checks Python + FFmpeg, creates a virtualenv, installs base dependencies, and copies the settings template. `start.bat` activates the venv and launches the server at http://localhost:8000.
+That's it. **`setup.bat` is all-in-one:**
+- Detects Python — **downloads and installs Python 3.11 if missing** (no admin needed, user-mode install)
+- Detects FFmpeg — **downloads portable FFmpeg to `bin/ffmpeg/` if missing** (~140 MB, no PATH changes needed)
+- Creates a virtualenv at `.venv/`
+- Installs `requirements.txt` (base: FastAPI + Edge-TTS + httpx, ~50 MB)
+- Optionally prompts to also install `requirements-full.txt` (Kokoro + Whisper + YouTube API, ~2 GB)
+- Copies `settings.example.json` → `settings.json`
+- Creates all required output directories
 
-For advanced AI features (Kokoro local voice, Whisper word-level subs, YouTube auto-upload), run `install_full.bat` after setup — adds ~2 GB of dependencies.
+`start.bat` activates the venv, detects portable FFmpeg if present, kills any zombie process on port 8000, opens your browser, and launches the server at http://localhost:8000.
+
+`update.bat` jala los últimos cambios del repo (`git pull`) y reinstala dependencias si `requirements.txt` cambió.
+
+`install_full.bat` agrega las features avanzadas (si las saltaste en setup.bat).
 
 ## Manual setup (Linux/Mac/other)
 

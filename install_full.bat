@@ -46,32 +46,16 @@ if errorlevel 1 (
 )
 
 echo.
-echo ─── [1/4] Whisper (subtítulos word-level) ──────────────────
-pip install openai-whisper
+echo ─── [1/2] Instalando desde requirements-full.txt ──────────
+pip install -r requirements-full.txt
 if errorlevel 1 (
-    echo [ERROR] Fallo Whisper.
+    echo [ERROR] Fallo instalacion de paquetes.
     pause
     exit /b 1
 )
 
 echo.
-echo ─── [2/4] Kokoro + Fish Audio + fal_client + utilidades ────
-pip install kokoro fish-audio-sdk fal-client soundfile numpy
-if errorlevel 1 (
-    echo [ERROR] Fallo paquetes de voz.
-    pause
-    exit /b 1
-)
-
-echo.
-echo ─── [3/4] YouTube Data API (auto-upload) ───────────────────
-pip install google-auth-oauthlib google-api-python-client google-auth-httplib2
-if errorlevel 1 (
-    echo [ADVERTENCIA] Fallo YouTube API. Si no piensas subir auto a YT, ignora.
-)
-
-echo.
-echo ─── [4/4] Pre-descargar modelo Whisper base ────────────────
+echo ─── [2/2] Pre-descargar modelo Whisper base ────────────────
 echo Esto descarga el modelo Whisper "base" (~150 MB) para que el primer uso sea rapido.
 python -c "import whisper; whisper.load_model('base'); print('Whisper base model OK')" 2>nul
 if errorlevel 1 (
