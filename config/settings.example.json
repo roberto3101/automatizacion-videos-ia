@@ -30,6 +30,7 @@
     "bold": true
   },
   "video_model": "kling21",
+  "production_mode": "auto",
   "pexels_api_key": "",
   "gpu_acceleration": "auto",
   "transition_style": "mixed",

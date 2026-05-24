@@ -160,18 +160,39 @@ async def generate_video_clip(visual_prompt: str, duration: int, output_filename
 
 
 async def generate_all_scenes_video(scenes: list, video_id: int, character_visual: str = "",
-                                    reference_image_url: str = "") -> list:
+                                    reference_image_url: str = "",
+                                    reference_image_path: str = "",
+                                    mode: str = None) -> list:
     """
     Generate video clips for all scenes.
 
-    Tries in order per scene:
-    1. AI video (R2V if reference_image_url, else T2V)
-    2. Pexels stock footage
-    3. Animated placeholder
+    mode:
+        None or "auto"  → AI via fal.ai (paid). Tries:
+                          1. AI video (R2V if reference, else T2V)
+                          2. Pexels stock footage fallback
+                          3. Animated placeholder
+        "free"          → Manual workflow: opens Whisk + Grok in browser,
+                          user generates images and clips, drops them in
+                          output/manual/video_{id}/, system waits and uses them.
+                          (Free, ~10 min user work per video.)
+
+    reference_image_path: local file path (for free mode instructions).
+    reference_image_url:  URL accessible to AI APIs (for fal.ai R2V).
     """
     settings = _load_settings()
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    if mode is None:
+        mode = settings.get("production_mode", "auto")
+
+    # ── FREE MODE: manual workflow with Whisk + Grok ────────────────
+    if mode == "free":
+        from . import free_mode
+        return free_mode.collect_manual_clips(
+            scenes, video_id, reference_image_path=reference_image_path,
+        )
+
+    # ── AUTO MODE: fal.ai (paid) ────────────────────────────────────
     has_ai = bool(settings.get("fal_api_key"))
     has_stock = bool(settings.get("pexels_api_key"))
     use_r2v = bool(has_ai and reference_image_url)

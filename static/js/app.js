@@ -10,9 +10,50 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     loadVoiceSettings();
     loadXttsVoices();
+    loadElevenLabsVoices();
     loadBenchmark();
     loadDashboard().then(() => loadScheduler());
 });
+
+// === ELEVENLABS ===
+async function loadElevenLabsVoices() {
+    const optgroup = document.getElementById('elevenlabs-voice-options');
+    if (!optgroup) return;
+    try {
+        const res = await fetch('/api/voices/es');
+        const voices = await res.json();
+        const eleven = voices.filter(v => v.engine === 'elevenlabs');
+        if (eleven.length === 0) {
+            optgroup.innerHTML = '<option value="" disabled>No ElevenLabs key configured (Settings → API Keys)</option>';
+            return;
+        }
+        // Sort: Spanish first, then by use_case "narrative" first, then alphabetical
+        eleven.sort((a, b) => {
+            const aEs = (a.language === 'es') ? 0 : 1;
+            const bEs = (b.language === 'es') ? 0 : 1;
+            if (aEs !== bEs) return aEs - bEs;
+            const aNar = (a.use_case || '').includes('narrative') ? 0 : 1;
+            const bNar = (b.use_case || '').includes('narrative') ? 0 : 1;
+            if (aNar !== bNar) return aNar - bNar;
+            return a.name.localeCompare(b.name);
+        });
+        let html = '';
+        eleven.forEach(v => {
+            const label = v.name.replace('ElevenLabs: ', '');
+            const tags = [];
+            if (v.language === 'es') tags.push('🇪🇸');
+            if ((v.use_case || '').includes('narrative')) tags.push('📖 narrativa');
+            if (v.gender) tags.push(v.gender.toLowerCase());
+            if (v.age) tags.push(v.age.replace('_', ' '));
+            const tagStr = tags.length ? ` — ${tags.join(' · ')}` : '';
+            html += `<option value="${v.id}">${label}${tagStr}</option>`;
+        });
+        optgroup.innerHTML = html;
+    } catch (e) {
+        console.error('Failed to load ElevenLabs voices', e);
+        optgroup.innerHTML = '<option value="" disabled>Error cargando voces ElevenLabs</option>';
+    }
+}
 
 // === TABS ===
 function switchTab(tab) {
@@ -472,7 +513,15 @@ async function startProduction() {
         await fetch(`/api/videos/${currentVideoId}/update-script`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ script: { title, scenes } }) });
         const btn = document.getElementById('btn-produce');
         btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Starting...';
-        const res = await fetch(`/api/videos/${currentVideoId}/produce`, { method: 'POST' });
+        const productionMode = document.querySelector('input[name="production-mode"]:checked')?.value || 'auto';
+        if (productionMode === 'free') {
+            toast('Modo FREE: te voy a abrir Whisk y Grok. Lee la terminal del server para instrucciones.', 'info');
+        }
+        const res = await fetch(`/api/videos/${currentVideoId}/produce`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ production_mode: productionMode })
+        });
         if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
         document.getElementById('production-status').classList.remove('hidden');
         document.getElementById('production-result').classList.add('hidden');

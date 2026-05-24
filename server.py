@@ -366,10 +366,22 @@ async def api_batch_generate(req: BatchGenerate):
 
 
 @app.post("/api/videos/{video_id}/produce")
-async def api_produce_video(video_id: int):
-    """Start full production pipeline for a video with an approved script."""
+async def api_produce_video(video_id: int, request: Request):
+    """
+    Start full production pipeline for a video with an approved script.
+
+    Body (optional):
+        production_mode: "auto" (default, fal.ai) or "free" (Whisk + Grok manual)
+    """
     if video_id in active_productions:
         raise HTTPException(status_code=409, detail="Production already in progress")
+
+    # Parse optional production mode override from request body
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    production_mode = body.get("production_mode")
 
     db = await get_db()
     rows = await db.execute_fetchall(
@@ -388,11 +400,15 @@ async def api_produce_video(video_id: int):
     if not video["script_json"]:
         raise HTTPException(status_code=400, detail="No script found. Generate a script first.")
 
-    # Start production in background
+    # Start production in background, passing the mode override
     active_productions[video_id] = "running"
-    asyncio.create_task(_run_production(video_id, video))
+    asyncio.create_task(_run_production(video_id, video, production_mode=production_mode))
 
-    return {"message": "Production started", "video_id": video_id}
+    return {
+        "message": "Production started",
+        "video_id": video_id,
+        "production_mode": production_mode or "auto",
+    }
 
 
 @app.post("/api/videos/{video_id}/update-script")
@@ -570,17 +586,17 @@ async def api_tts_benchmark():
             },
             {
                 "id": "elevenlabs",
-                "name": "ElevenLabs (No integrado)",
+                "name": "ElevenLabs (multilingual_v2)",
                 "naturalness": 10.0,
                 "spanish": 9.5,
                 "speed": "2-3s/escena (API)",
-                "cost": "$5/mes (30 min)",
-                "commercial": "Permitido",
+                "cost": "Free 10K chars/mes | Starter $6/mes 30K chars",
+                "commercial": "Solo plan pago (Starter+)",
                 "voice_clone": True,
                 "local": False,
-                "configured": False,
-                "pros": ["La mejor calidad", "Voz humana perfecta", "Comercial OK"],
-                "cons": ["$5/mes minimo", "No integrado aun"],
+                "configured": bool(settings.get("elevenlabs_api_key")),
+                "pros": ["La mejor calidad del mercado", "Voz humana perfecta", "29 idiomas", "Free tier generoso"],
+                "cons": ["Free tier sin licencia comercial", "Requiere internet"],
             },
         ]
     }
@@ -734,8 +750,58 @@ async def get_voices(language: str):
 async def preview_voice(voice_id: str):
     """Get or generate a voice preview audio sample."""
     preview_dir = os.path.join(BASE_DIR, "output", "voice_previews")
+    os.makedirs(preview_dir, exist_ok=True)
 
-    # Check for kokoro voices (wav files)
+    # ─── ElevenLabs ─────────────────────────────────────────────
+    # Use the pre-rendered preview_url from /v1/voices/{id} —
+    # FREE, doesn't touch the user's character quota. Cache locally.
+    if voice_id.startswith("elevenlabs:"):
+        eleven_id = voice_id.replace("elevenlabs:", "").strip()
+        # Sanitize filename
+        safe_id = "".join(c for c in eleven_id if c.isalnum() or c in "-_")
+        cache_path = os.path.join(preview_dir, f"elevenlabs_{safe_id}.mp3")
+        if os.path.exists(cache_path):
+            return FileResponse(cache_path, media_type="audio/mpeg")
+
+        # Fetch voice metadata to get preview_url
+        with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+            settings = json.load(f)
+        api_key = settings.get("elevenlabs_api_key", "")
+        if not api_key:
+            raise HTTPException(status_code=400,
+                detail="ElevenLabs API key not configured in settings.")
+
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                r = await client.get(
+                    f"https://api.elevenlabs.io/v1/voices/{eleven_id}",
+                    headers={"xi-api-key": api_key},
+                )
+                if r.status_code != 200:
+                    raise HTTPException(status_code=400,
+                        detail=f"ElevenLabs voice lookup failed ({r.status_code}): {r.text[:150]}")
+                voice_data = r.json()
+                preview_url = voice_data.get("preview_url")
+                if not preview_url:
+                    raise HTTPException(status_code=404,
+                        detail=f"No preview available for voice '{eleven_id}'")
+
+                # Download the pre-rendered preview (free, no credit cost)
+                pr = await client.get(preview_url)
+                if pr.status_code != 200:
+                    raise HTTPException(status_code=500,
+                        detail="Failed to download preview audio")
+                with open(cache_path, "wb") as fout:
+                    fout.write(pr.content)
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"ElevenLabs preview error: {e}")
+
+        return FileResponse(cache_path, media_type="audio/mpeg")
+
+    # ─── Kokoro voices (wav files) ──────────────────────────────
     if voice_id.startswith("kokoro:"):
         kokoro_name = voice_id.replace("kokoro:", "")
         wav_path = os.path.join(preview_dir, f"kokoro_{kokoro_name}.wav")
@@ -752,10 +818,9 @@ async def preview_voice(voice_id: str):
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Voice error: {e}")
 
-    # Edge-TTS voices
+    # ─── Edge-TTS voices ────────────────────────────────────────
     preview_path = os.path.join(preview_dir, f"{voice_id}.mp3")
     if not os.path.exists(preview_path):
-        os.makedirs(preview_dir, exist_ok=True)
         import edge_tts
         text = "Sit down and listen carefully. This is a story that will change how you see everything around you. Are you ready?"
         try:
@@ -1335,8 +1400,13 @@ async def _retry_async(func, *args, retries=MAX_RETRIES, delay=RETRY_DELAY, **kw
     raise last_error
 
 
-async def _run_production(video_id: int, video: dict):
-    """Run the full production pipeline in background with retry logic."""
+async def _run_production(video_id: int, video: dict, production_mode: str = None):
+    """
+    Run the full production pipeline in background with retry logic.
+
+    production_mode: override the settings.production_mode. "auto" uses fal.ai,
+    "free" uses the manual Whisk+Grok workflow.
+    """
     db = await get_db()
     try:
         script = json.loads(video["script_json"])
@@ -1347,6 +1417,10 @@ async def _run_production(video_id: int, video: dict):
         # Load settings
         with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
             settings = json.load(f)
+
+        # Determine production mode (request override > settings default)
+        if production_mode is None:
+            production_mode = settings.get("production_mode", "auto")
 
         # Step 1: Update status
         await db.execute("UPDATE videos SET status = 'generating' WHERE id = ?", (video_id,))
@@ -1364,9 +1438,12 @@ async def _run_production(video_id: int, video: dict):
                        f"Generated {len(audio_results)} audio files", cost=0.0)
 
         # Step 3: Generate video clips (with retry per clip)
-        await _log_step(db, video_id, "video", "running", "Generating video clips...")
+        mode_label = "Whisk + Grok manual" if production_mode == "free" else "fal.ai automatico"
+        await _log_step(db, video_id, "video", "running",
+                       f"Generando clips ({mode_label})...")
         video_clips = await _retry_async(
-            generate_all_scenes_video, scenes, video_id, char_visual
+            generate_all_scenes_video, scenes, video_id, char_visual,
+            "", "", production_mode  # reference_image_url, reference_image_path, mode
         )
         # Estimate cost: $0.05/sec for Wan 2.6 if fal.ai key is set
         fal_cost = 0.0

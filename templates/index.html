@@ -196,6 +196,25 @@
                             <option value="batch">Batch (multiple)</option>
                         </select>
                     </div>
+                    <div class="form-group full-width">
+                        <label>Production Mode <span style="font-weight:normal;color:var(--text-muted);font-size:11px">— cómo se generan las imágenes y los clips</span></label>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px">
+                            <label class="prod-mode-card" style="border:2px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;display:block">
+                                <input type="radio" name="production-mode" value="auto" checked style="margin-right:8px">
+                                <strong>🤖 Auto (fal.ai)</strong>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+                                    Kling 2.1 / Veo / FLUX vía API. ~$1.60 por video 30s. Production-ready, sin clicks manuales.
+                                </div>
+                            </label>
+                            <label class="prod-mode-card" style="border:2px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;display:block">
+                                <input type="radio" name="production-mode" value="free" style="margin-right:8px">
+                                <strong>🆓 Free (Whisk + Grok manual)</strong>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+                                    El sistema te abre Whisk y Grok, te da los prompts, tú generas las imágenes/clips, yo termino el video. $0 / ~10 min trabajo manual por video.
+                                </div>
+                            </label>
+                        </div>
+                    </div>
                     <div class="form-group full-width" id="single-topic-group">
                         <label>Topic / Story Idea</label>
                         <textarea id="prod-topic" class="input textarea" placeholder="e.g. A family moves into a house where the mirrors don't reflect what's actually in the room..."></textarea>
@@ -313,6 +332,9 @@
                         <div class="form-group full-width">
                             <label>Voice <button class="btn btn-secondary btn-small" onclick="previewVoice()" style="margin-left:8px">🔊 Preview</button></label>
                             <select id="char-voice" class="input" onchange="stopVoicePreview()">
+                                <optgroup label="🤖 ElevenLabs (Premium AI — tu cuenta)" id="elevenlabs-voice-options">
+                                    <option value="" disabled>Cargando voces de tu cuenta...</option>
+                                </optgroup>
                                 <optgroup label="⭐ HD Premium (Best Quality)">
                                     <option value="en-US-AndrewMultilingualNeural">Andrew HD — Deep, mature, cinematic (Male US)</option>
                                     <option value="en-US-BrianMultilingualNeural">Brian HD — Rich, authoritative (Male US)</option>

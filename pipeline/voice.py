@@ -425,27 +425,38 @@ async def list_voices(language: str = "en") -> list:
 
     settings = _load_settings()
 
-    # ElevenLabs voices (if API key configured, list a few popular defaults + any custom)
-    if settings.get("elevenlabs_api_key"):
-        eleven_defaults = [
-            ("elevenlabs:21m00Tcm4TlvDq8ikWAM", "ElevenLabs: Rachel (warm female)"),
-            ("elevenlabs:AZnzlk1XvdvUeBnXmlld", "ElevenLabs: Domi (strong female)"),
-            ("elevenlabs:EXAVITQu4vr4xnSDxMaL", "ElevenLabs: Bella (soft female)"),
-            ("elevenlabs:ErXwobaYiN019PkySvjV", "ElevenLabs: Antoni (warm male)"),
-            ("elevenlabs:VR6AewLTigWG4xSOukaG", "ElevenLabs: Arnold (deep male)"),
-            ("elevenlabs:pNInz6obpgDQGcFmaJgB", "ElevenLabs: Adam (narrator male)"),
-            ("elevenlabs:yoZ06aMxZJJ28mfd3POQ", "ElevenLabs: Sam (raspy male)"),
-        ]
-        for vid, name in eleven_defaults:
-            voices.append({"id": vid, "name": name, "gender": "Mixed", "engine": "elevenlabs"})
-        # Custom voice IDs from settings
-        for cv in settings.get("elevenlabs_custom_voices", []):
-            voices.append({
-                "id": f"elevenlabs:{cv['voice_id']}",
-                "name": f"ElevenLabs: {cv.get('name', cv['voice_id'])}",
-                "gender": cv.get("gender", "Mixed"),
-                "engine": "elevenlabs",
-            })
+    # ElevenLabs — fetch the REAL voice library from the user's account.
+    # Free endpoint, no credit cost. Cached for the lifetime of this call.
+    eleven_key = settings.get("elevenlabs_api_key", "")
+    if eleven_key:
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                r = await client.get(
+                    "https://api.elevenlabs.io/v1/voices",
+                    headers={"xi-api-key": eleven_key},
+                )
+                if r.status_code == 200:
+                    for v in r.json().get("voices", []):
+                        labels = v.get("labels", {}) or {}
+                        name_parts = [v["name"]]
+                        if labels.get("accent"):
+                            name_parts.append(labels["accent"])
+                        if labels.get("use_case"):
+                            name_parts.append(labels["use_case"])
+                        voices.append({
+                            "id": f"elevenlabs:{v['voice_id']}",
+                            "name": "ElevenLabs: " + " · ".join(name_parts),
+                            "gender": labels.get("gender", "Mixed").title(),
+                            "engine": "elevenlabs",
+                            "language": labels.get("language", "en"),
+                            "use_case": labels.get("use_case", ""),
+                            "accent": labels.get("accent", ""),
+                            "age": labels.get("age", ""),
+                        })
+        except Exception:
+            # If API call fails, the user still has Edge-TTS / Kokoro available
+            pass
 
     # Fish Audio voices
     if settings.get("fish_api_key"):
