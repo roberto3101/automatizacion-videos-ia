@@ -67,14 +67,17 @@ async def generate_voice(text: str, voice_id: str = "en-US-GuyNeural",
                          speaker_wav: str = None, language: str = None) -> dict:
     """
     Generate speech audio. Auto-detects engine from voice_id prefix:
-    - 'fish:' prefix → Fish Audio engine (e.g. fish:default or fish:MODEL_ID)
-    - 'xtts:' prefix → XTTS v2 engine (e.g. xtts:old_emilio or xtts:default)
-    - 'kokoro:' prefix → Kokoro engine (e.g. kokoro:am_adam)
-    - anything else → Edge-TTS engine
+    - 'elevenlabs:VOICE_ID' → ElevenLabs (premium quality, multilingual)
+    - 'fish:' prefix → Fish Audio engine
+    - 'xtts:' prefix → XTTS v2 engine (voice cloning)
+    - 'kokoro:' prefix → Kokoro engine (local, English-best)
+    - anything else → Edge-TTS engine (free, fast)
     """
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    if voice_id.startswith("fish:"):
+    if voice_id.startswith("elevenlabs:"):
+        return await _generate_elevenlabs(text, voice_id, output_filename)
+    elif voice_id.startswith("fish:"):
         return await _generate_fish(text, voice_id, output_filename, language)
     elif voice_id.startswith("xtts:"):
         return await _generate_xtts(text, voice_id, output_filename, speaker_wav, language)
@@ -82,6 +85,75 @@ async def generate_voice(text: str, voice_id: str = "en-US-GuyNeural",
         return await _generate_kokoro(text, voice_id, output_filename)
     else:
         return await _generate_edge_tts(text, voice_id, output_filename, rate, pitch)
+
+
+# ─── ElevenLabs ──────────────────────────────────────────────────────────
+
+async def _generate_elevenlabs(text: str, voice_id: str, output_filename: str) -> dict:
+    """
+    Generate with ElevenLabs API (premium quality, multilingual).
+
+    voice_id format: 'elevenlabs:VOICE_ID' (e.g. 'elevenlabs:21m00Tcm4TlvDq8ikWAM')
+    Get the voice ID from https://elevenlabs.io/app/voice-library after picking a voice.
+    Free tier: 10K chars/month. Pro: $5/month for 30K chars.
+    """
+    import httpx
+
+    settings = _load_settings()
+    api_key = settings.get("elevenlabs_api_key", "")
+    if not api_key:
+        raise Exception(
+            "ElevenLabs API key not configured. "
+            "Get one free at https://elevenlabs.io → Profile → API key, "
+            "then set 'elevenlabs_api_key' in config/settings.json."
+        )
+
+    eleven_voice_id = voice_id.replace("elevenlabs:", "").strip()
+    if not eleven_voice_id:
+        raise Exception(
+            "ElevenLabs voice_id missing. Use format 'elevenlabs:VOICE_ID'. "
+            "Pick a voice at https://elevenlabs.io/app/voice-library."
+        )
+
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    if not output_path.endswith(".mp3"):
+        output_path = output_path.rsplit(".", 1)[0] + ".mp3"
+
+    # Model selection: eleven_multilingual_v2 supports Spanish + 28 other languages.
+    # eleven_turbo_v2_5 is cheaper and faster for English.
+    model_id = settings.get("elevenlabs_model_id", "eleven_multilingual_v2")
+
+    # Voice settings — tunable per character via settings.elevenlabs_voice_settings
+    voice_settings = settings.get("elevenlabs_voice_settings", {
+        "stability": 0.5,         # 0=very expressive, 1=very stable
+        "similarity_boost": 0.75, # how close to the reference voice
+        "style": 0.0,             # exaggeration of style (0-1)
+        "use_speaker_boost": True,
+    })
+
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        response = await client.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{eleven_voice_id}",
+            headers={
+                "xi-api-key": api_key,
+                "Content-Type": "application/json",
+                "Accept": "audio/mpeg",
+            },
+            json={
+                "text": text,
+                "model_id": model_id,
+                "voice_settings": voice_settings,
+            },
+        )
+
+    if response.status_code != 200:
+        raise Exception(f"ElevenLabs error ({response.status_code}): {response.text[:300]}")
+
+    with open(output_path, "wb") as f:
+        f.write(response.content)
+
+    duration = _get_audio_duration(output_path)
+    return {"path": output_path, "duration": duration}
 
 
 # ─── Fish Audio ──────────────────────────────────────────────────────────
@@ -351,8 +423,31 @@ async def list_voices(language: str = "en") -> list:
     """List available voices across all engines."""
     voices = []
 
-    # Fish Audio voices
     settings = _load_settings()
+
+    # ElevenLabs voices (if API key configured, list a few popular defaults + any custom)
+    if settings.get("elevenlabs_api_key"):
+        eleven_defaults = [
+            ("elevenlabs:21m00Tcm4TlvDq8ikWAM", "ElevenLabs: Rachel (warm female)"),
+            ("elevenlabs:AZnzlk1XvdvUeBnXmlld", "ElevenLabs: Domi (strong female)"),
+            ("elevenlabs:EXAVITQu4vr4xnSDxMaL", "ElevenLabs: Bella (soft female)"),
+            ("elevenlabs:ErXwobaYiN019PkySvjV", "ElevenLabs: Antoni (warm male)"),
+            ("elevenlabs:VR6AewLTigWG4xSOukaG", "ElevenLabs: Arnold (deep male)"),
+            ("elevenlabs:pNInz6obpgDQGcFmaJgB", "ElevenLabs: Adam (narrator male)"),
+            ("elevenlabs:yoZ06aMxZJJ28mfd3POQ", "ElevenLabs: Sam (raspy male)"),
+        ]
+        for vid, name in eleven_defaults:
+            voices.append({"id": vid, "name": name, "gender": "Mixed", "engine": "elevenlabs"})
+        # Custom voice IDs from settings
+        for cv in settings.get("elevenlabs_custom_voices", []):
+            voices.append({
+                "id": f"elevenlabs:{cv['voice_id']}",
+                "name": f"ElevenLabs: {cv.get('name', cv['voice_id'])}",
+                "gender": cv.get("gender", "Mixed"),
+                "engine": "elevenlabs",
+            })
+
+    # Fish Audio voices
     if settings.get("fish_api_key"):
         voices.append({"id": "fish:default", "name": "Fish Audio: Default", "gender": "Mixed", "engine": "fish"})
         fish_model = settings.get("fish_model_id", "")

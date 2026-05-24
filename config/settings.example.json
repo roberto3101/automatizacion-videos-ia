@@ -34,5 +34,14 @@
   "gpu_acceleration": "auto",
   "transition_style": "mixed",
   "kokoro_speed": 0.8,
-  "fish_api_key": ""
+  "fish_api_key": "",
+  "elevenlabs_api_key": "",
+  "elevenlabs_model_id": "eleven_multilingual_v2",
+  "elevenlabs_voice_settings": {
+    "stability": 0.5,
+    "similarity_boost": 0.75,
+    "style": 0.0,
+    "use_speaker_boost": true
+  },
+  "elevenlabs_custom_voices": []
 }
